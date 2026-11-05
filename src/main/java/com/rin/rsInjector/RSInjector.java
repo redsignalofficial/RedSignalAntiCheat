@@ -8,6 +8,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -209,26 +211,175 @@ public abstract class RSInjector {
       }
    }
 
-   private static Class<?> getNMSClass(String name, String mcPackage) {
-      String path = COMPLETE_VERSION != null
-         ? "net.minecraft." + (VERSION >= 17 ? mcPackage : "server." + COMPLETE_VERSION) + '.' + name
-         : "net.minecraft." + (VERSION >= 17 ? mcPackage : "server") + '.' + name;
+   private static Class<?> getNMSClass(String spigotName, String mcPackage, String... alternateNames) {
+      List<String> names = new ArrayList<>();
+      names.add(spigotName);
+      if (alternateNames != null) {
+         Collections.addAll(names, alternateNames);
+      }
 
+      for (String name : names) {
+         if (name.contains(".")) {
+            try {
+               return Class.forName(name);
+            } catch (ClassNotFoundException ignored) {
+            }
+         }
+
+         List<String> candidates = new ArrayList<>();
+         if (COMPLETE_VERSION != null) {
+            if (VERSION >= 17) {
+               candidates.add("net.minecraft." + mcPackage + '.' + name);
+            }
+            candidates.add("net.minecraft.server." + COMPLETE_VERSION + '.' + name);
+         }
+         candidates.add("net.minecraft." + mcPackage + '.' + name);
+         candidates.add("net.minecraft.server." + name);
+         candidates.add("net.minecraft." + name);
+
+         for (String candidate : candidates) {
+            try {
+               return Class.forName(candidate);
+            } catch (ClassNotFoundException ignored) {
+            }
+         }
+      }
+
+      throw new RuntimeException("[RSInjector] Cannot find NMS Class! (" + spigotName + " / " + Arrays.toString(alternateNames) + ")");
+   }
+
+   @Nullable
+   private static Class<?> getNMSClassOrNull(String spigotName, String mcPackage, String... alternateNames) {
       try {
-         return Class.forName(path);
-      } catch (ClassNotFoundException var4) {
-         throw new RuntimeException("[RSInjector] Cannot find NMS Class! (" + path + ')', var4);
+         return getNMSClass(spigotName, mcPackage, alternateNames);
+      } catch (Exception ignored) {
+         return null;
       }
    }
 
    private static Class<?> getCBClass(String name) {
-      String clazz = COMPLETE_VERSION != null ? "org.bukkit.craftbukkit." + COMPLETE_VERSION + "." + name : "org.bukkit.craftbukkit." + name;
-
-      try {
-         return Class.forName(clazz);
-      } catch (ClassNotFoundException var3) {
-         throw new RuntimeException("[RSInjector] Cannot find CB Class! (" + clazz + ')', var3);
+      List<String> candidates = new ArrayList<>();
+      if (COMPLETE_VERSION != null) {
+         candidates.add("org.bukkit.craftbukkit." + COMPLETE_VERSION + "." + name);
       }
+      candidates.add("org.bukkit.craftbukkit." + name);
+
+      for (String clazz : candidates) {
+         try {
+            return Class.forName(clazz);
+         } catch (ClassNotFoundException ignored) {
+         }
+      }
+
+      throw new RuntimeException("[RSInjector] Cannot find CB Class! (" + name + ')');
+   }
+
+   private static Field getServerField(Class<?> craftServerClass, Class<?> serverClass) {
+      try {
+         Field f = craftServerClass.getDeclaredField("console");
+         f.setAccessible(true);
+         return f;
+      } catch (Exception ignored) {
+      }
+      return getField(craftServerClass, serverClass, 1);
+   }
+
+   private static Field getServerConnectionField(Class<?> serverClass, Class<?> connectionClass) {
+      for (String name : new String[]{"connection", "serverConnection"}) {
+         try {
+            Field f = serverClass.getDeclaredField(name);
+            if (connectionClass.isAssignableFrom(f.getType())) {
+               f.setAccessible(true);
+               return f;
+            }
+         } catch (Exception ignored) {
+         }
+      }
+      return getField(serverClass, connectionClass, 1, 2);
+   }
+
+   private static Field getNetworkManagersListField(Class<?> serverConnectionClass) {
+      for (String name : new String[]{"connections", "networkManagers", "g", "h"}) {
+         try {
+            Field f = serverConnectionClass.getDeclaredField(name);
+            if (List.class.isAssignableFrom(f.getType())) {
+               f.setAccessible(true);
+               return f;
+            }
+         } catch (Exception ignored) {
+         }
+      }
+      try {
+         return getField(serverConnectionClass, List.class, 2);
+      } catch (Exception ignored) {
+      }
+      return getField(serverConnectionClass, List.class, 1);
+   }
+
+   private static Field getChannelField(Class<?> networkManagerClass) {
+      try {
+         Field f = networkManagerClass.getDeclaredField("channel");
+         if (Channel.class.isAssignableFrom(f.getType())) {
+            f.setAccessible(true);
+            return f;
+         }
+      } catch (Exception ignored) {
+      }
+      return getField(networkManagerClass, Channel.class, 1, 2);
+   }
+
+   @Nullable
+   private static Field getGameProfileFieldOrNull(Class<?> packetClass) {
+      if (packetClass == null) {
+         return null;
+      }
+      for (String name : new String[]{"gameProfile", "a"}) {
+         try {
+            Field f = packetClass.getDeclaredField(name);
+            if (GameProfile.class.isAssignableFrom(f.getType())) {
+               f.setAccessible(true);
+               return f;
+            }
+         } catch (Exception ignored) {
+         }
+      }
+      try {
+         return getField(packetClass, GameProfile.class, 1);
+      } catch (Exception ignored) {
+         return null;
+      }
+   }
+
+   private static Field getPlayerConnectionField(Class<?> playerClass, Class<?> connectionClass) {
+      for (String name : new String[]{"connection", "playerConnection", "b"}) {
+         try {
+            Field f = playerClass.getDeclaredField(name);
+            if (connectionClass.isAssignableFrom(f.getType())) {
+               f.setAccessible(true);
+               return f;
+            }
+         } catch (Exception ignored) {
+         }
+      }
+      return getField(playerClass, connectionClass, 1, 2);
+   }
+
+   private static Field getNetworkManagerField(Class<?> playerConnectionClass, Class<?> networkManagerClass) {
+      for (String name : new String[]{"connection", "networkManager", "c", "h", "a"}) {
+         Class<?> cur = playerConnectionClass;
+         while (cur != null && cur != Object.class) {
+            try {
+               Field f = cur.getDeclaredField(name);
+               if (networkManagerClass.isAssignableFrom(f.getType())) {
+                  f.setAccessible(true);
+                  return f;
+               }
+            } catch (Exception ignored) {
+            }
+            cur = cur.getSuperclass();
+         }
+      }
+      return getField(playerConnectionClass, networkManagerClass, 1, 4);
    }
 
    private static Field getField(Class<?> clazz, String name) {
@@ -380,19 +531,19 @@ public abstract class RSInjector {
       }
 
       SERVER_CLASS = getNMSClass("MinecraftServer", "server");
-      SERVER_CONNECTION_CLASS = getNMSClass("ServerConnection", "server.network");
-      NETWORK_MANAGER_CLASS = getNMSClass("NetworkManager", "network");
-      ENTITY_PLAYER_CLASS = getNMSClass("EntityPlayer", "server.level");
-      PLAYER_CONNECTION_CLASS = getNMSClass("PlayerConnection", "server.network");
-      PACKET_LOGIN_OUT_SUCCESS_CLASS = getNMSClass("PacketLoginOutSuccess", "network.protocol.login");
-      NMS_SERVER = getField(getCBClass("CraftServer"), SERVER_CLASS, 1);
-      NMS_SERVER_CONNECTION = getField(SERVER_CLASS, SERVER_CONNECTION_CLASS, 1);
-      NMS_NETWORK_MANAGERS_LIST = getField(SERVER_CONNECTION_CLASS, List.class, 2);
+      SERVER_CONNECTION_CLASS = getNMSClass("ServerConnection", "server.network", "ServerConnectionListener");
+      NETWORK_MANAGER_CLASS = getNMSClass("NetworkManager", "network", "Connection");
+      ENTITY_PLAYER_CLASS = getNMSClass("EntityPlayer", "server.level", "ServerPlayer");
+      PLAYER_CONNECTION_CLASS = getNMSClass("PlayerConnection", "server.network", "ServerGamePacketListenerImpl", "ServerCommonPacketListenerImpl");
+      PACKET_LOGIN_OUT_SUCCESS_CLASS = getNMSClassOrNull("PacketLoginOutSuccess", "network.protocol.login", "ClientboundLoginFinishedPacket", "ClientboundGameProfilePacket");
+      NMS_SERVER = getServerField(getCBClass("CraftServer"), SERVER_CLASS);
+      NMS_SERVER_CONNECTION = getServerConnectionField(SERVER_CLASS, SERVER_CONNECTION_CLASS);
+      NMS_NETWORK_MANAGERS_LIST = getNetworkManagersListField(SERVER_CONNECTION_CLASS);
       NMS_PENDING_NETWORK_MANAGERS = getPendingNetworkManagersFieldOrNull(SERVER_CONNECTION_CLASS);
-      NMS_CHANNEL_FROM_NM = getField(NETWORK_MANAGER_CLASS, Channel.class, 1);
-      GAME_PROFILE_FROM_PACKET = getField(PACKET_LOGIN_OUT_SUCCESS_CLASS, GameProfile.class, 1);
-      GET_PLAYER_CONNECTION = getField(ENTITY_PLAYER_CLASS, PLAYER_CONNECTION_CLASS, 1);
-      GET_NETWORK_MANAGER = getField(PLAYER_CONNECTION_CLASS, NETWORK_MANAGER_CLASS, 1, 1);
+      NMS_CHANNEL_FROM_NM = getChannelField(NETWORK_MANAGER_CLASS);
+      GAME_PROFILE_FROM_PACKET = getGameProfileFieldOrNull(PACKET_LOGIN_OUT_SUCCESS_CLASS);
+      GET_PLAYER_CONNECTION = getPlayerConnectionField(ENTITY_PLAYER_CLASS, PLAYER_CONNECTION_CLASS);
+      GET_NETWORK_MANAGER = getNetworkManagerField(PLAYER_CONNECTION_CLASS, NETWORK_MANAGER_CLASS);
       GET_PLAYER_HANDLE = getMethod(getCBClass("entity.CraftPlayer"), "getHandle");
       ID = 0;
    }
@@ -487,11 +638,23 @@ public abstract class RSInjector {
       }
 
       public void write(ChannelHandlerContext ctx, Object packet, ChannelPromise promise) throws Exception {
-         if (this.player == null && RSInjector.PACKET_LOGIN_OUT_SUCCESS_CLASS.isInstance(packet)) {
+         if (this.player == null && RSInjector.PACKET_LOGIN_OUT_SUCCESS_CLASS != null && RSInjector.PACKET_LOGIN_OUT_SUCCESS_CLASS.isInstance(packet)) {
             try {
-               Player player = RSInjector.this.playerCache.remove(((GameProfile)RSInjector.GAME_PROFILE_FROM_PACKET.get(packet)).getId());
-               if (player != null) {
-                  this.player = player;
+               GameProfile profile = null;
+               if (RSInjector.GAME_PROFILE_FROM_PACKET != null) {
+                  profile = (GameProfile)RSInjector.GAME_PROFILE_FROM_PACKET.get(packet);
+               } else {
+                  try {
+                     Method m = packet.getClass().getMethod("gameProfile");
+                     profile = (GameProfile)m.invoke(packet);
+                  } catch (Exception ignored) {
+                  }
+               }
+               if (profile != null) {
+                  Player player = RSInjector.this.playerCache.remove(profile.getId());
+                  if (player != null) {
+                     this.player = player;
+                  }
                }
             } catch (ReflectiveOperationException var8) {
             }

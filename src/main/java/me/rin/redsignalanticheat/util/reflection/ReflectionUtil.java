@@ -13,8 +13,19 @@ public class ReflectionUtil {
 
     @Nullable
     public static Class<?> classForName(String name) throws ReflectionException {
-        String version = Bukkit.getServer().getClass().getPackage().getName();
-        version = version.substring(version.lastIndexOf('.') + 1);
+        String pkg = Bukkit.getServer().getClass().getPackage().getName();
+        String version = pkg.substring(pkg.lastIndexOf('.') + 1);
+        if (version.startsWith("v")) {
+            try {
+                return Class.forName(name.replace("$version", version));
+            } catch (ClassNotFoundException | NullPointerException ignored) {
+            }
+        }
+        try {
+            String unversioned = name.replace(".$version", "").replace("$version.", "").replace("$version", "");
+            return Class.forName(unversioned);
+        } catch (ClassNotFoundException | NullPointerException ignored) {
+        }
         try {
             return Class.forName(name.replace("$version", version));
         } catch (ClassNotFoundException | NullPointerException e) {
