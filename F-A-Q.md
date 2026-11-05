@@ -1,4 +1,4 @@
-# F.A.Q.
+# F.A.Q
 
 ## How can I log violations or/and punishments in a Discord channel?
 Check out `discord-webhook` config selection. You don't need to install additional plugins.
