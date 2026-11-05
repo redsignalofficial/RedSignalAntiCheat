@@ -81,7 +81,7 @@ public class MultiVersionUtil {
       } else if (entity.getType() == EntityType.VILLAGER) {
          return 0.6;
       } else {
-         return entity.getType() == EntityType.PIG_ZOMBIE ? 0.6 : 10.0;
+         return ("PIG_ZOMBIE".equals(entity.getType().name()) || "ZOMBIFIED_PIGLIN".equals(entity.getType().name())) ? 0.6 : 10.0;
       }
    }
 
@@ -117,7 +117,7 @@ public class MultiVersionUtil {
       } else if (entity.getType() == EntityType.VILLAGER) {
          return 1.95;
       } else {
-         return entity.getType() == EntityType.PIG_ZOMBIE ? 1.95 : 10.0;
+         return ("PIG_ZOMBIE".equals(entity.getType().name()) || "ZOMBIFIED_PIGLIN".equals(entity.getType().name())) ? 1.95 : 10.0;
       }
    }
 
