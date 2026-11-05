@@ -1,6 +1,6 @@
 # RedSignalAntiCheat
 
-A lightweight and customizable Minecraft anti-cheat designed to detect common hacks across multiple server versions with Folia, Paper, and Spigot compatibility.
+RSAC and customizable Minecraft anti-cheat designed to detect common hacks across multiple server versions with Folia, Paper, and Spigot compatibility.
 
 ## Authors & Contributors
 - **redsignalofficial** ([@redsignalofficial](https://github.com/redsignalofficial))

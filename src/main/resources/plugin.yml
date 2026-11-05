@@ -4,7 +4,7 @@ main: me.rin.redsignalanticheat.Main
 api-version: '1.13'
 folia-supported: true
 softdepend: [ Geyser-Spigot, floodgate, ViaVersion, GSit, mcMMO, ValhallaMMO, VeinMiner, AureliumSkills, ExecutableItems, EnchantsSquared ]
-description: A lightweight and customizable anticheat, designed to detect common hacks.
+description: RSAC and customizable anticheat, designed to detect common hacks.
 authors: [ RinDevelopment, redsingalofficial]
 website: www.rindev.site
 commands:
