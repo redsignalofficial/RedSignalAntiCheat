@@ -1,0 +1,63 @@
+name: RedSignalAntiCheat
+version: '$version'
+main: me.rin.redsignalanticheat.Main
+api-version: '1.13'
+folia-supported: true
+softdepend: [ Geyser-Spigot, floodgate, ViaVersion, GSit, mcMMO, ValhallaMMO, VeinMiner, AureliumSkills, ExecutableItems, EnchantsSquared ]
+description: A lightweight and customizable anticheat, designed to detect common hacks.
+authors: [ RinDevelopment, redsingalofficial]
+website: www.rindev.site
+commands:
+  redsignalanticheat:
+    aliases: [ redsignal, lac, anticheat, ac ]
+permissions:
+  redsignalanticheat.checks:
+    description: Allows /anticheat checks command
+    default: op
+  redsignalanticheat.reload:
+    description: Allows /anticheat reload command
+    default: op
+  redsignalanticheat.alerts.notify:
+    description: See debug messages
+    default: op
+  redsignalanticheat.alerts.toggle:
+    description: Allows /anticheat alerts command
+    default: op
+  redsignalanticheat.alerts.teleport:
+    description: Allows /anticheat teleport command
+    default: op
+  redsignalanticheat.alerts:
+    description: All of the alert permissions
+    default: op
+    children:
+      redsignalanticheat.alerts.notify: true
+      redsignalanticheat.alerts.toggle: true
+      redsignalanticheat.alerts.teleport: true
+  redsignalanticheat.client:
+    description: Allows /anticheat client command
+    default: op
+  redsignalanticheat.tps:
+    description: Allows /anticheat tps command
+    default: op
+  redsignalanticheat.ping:
+    description: Allows /anticheat ping command
+    default: op
+  redsignalanticheat.cps:
+    description: Allows /anticheat cps command
+    default: op
+  redsignalanticheat.bypass:
+    description: Bypass all the checks
+    default: op
+  redsignalanticheat.*:
+    description: All of all the above
+    default: op
+    children:
+      redsignalanticheat.checks: true
+      redsignalanticheat.reload: true
+      redsignalanticheat.alerts: true
+      redsignalanticheat.broadcast: true
+      redsignalanticheat.client: true
+      redsignalanticheat.tps: true
+      redsignalanticheat.ping: true
+      redsignalanticheat.cps: true
+      redsignalanticheat.bypass: true
