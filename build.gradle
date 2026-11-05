@@ -9,6 +9,8 @@ version = '1.2.7'
 
 repositories {
     mavenCentral()
+    // Paper repository
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
     // Config Updater
     maven { url 'https://oss.sonatype.org/content/groups/public/' }
     // Floodgate
@@ -28,6 +30,8 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok:1.18.38'
+    // Paper API
+    compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
     // Spigot API
     compileOnly files('comp/spigot-1.8.8-R0.1-SNAPSHOT-latest.jar')
     // Netty
@@ -42,7 +46,7 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
