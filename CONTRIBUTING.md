@@ -1,6 +1,10 @@
 # Contributing to RedSignalAntiCheat
 
-RedSignalAntiCheat is happy that you want to contribute to the project! We are always looking for new contributors to help us improve the project. We have a few guidelines that we ask you to follow when contributing to the project.
+RedSignalAntiCheat is developed and maintained by **redsignalofficial** and **RinDevelopment**. We welcome contributions from the community to help improve detection, compatibility, and performance. Please follow these guidelines when contributing to the project.
+
+## Maintainers & Contributors
+- **redsignalofficial** ([@redsignalofficial](https://github.com/redsignalofficial))
+- **RinDevelopment** ([@RinDevelopment](https://github.com/RinDevelopment))
 
 
 
